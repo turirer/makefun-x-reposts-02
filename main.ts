@@ -12,7 +12,7 @@
 // MAKEFUN_BOT_DIR and MAKEFUN_OUTPUT_DIR override those paths:
 //   mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const repoRoot = process.env.MAKEFUN_BOT_DIR ?? '/bot';
@@ -23,9 +23,15 @@ const destFile = join(outDir, 'POSTS.json');
 
 mkdirSync(outDir, { recursive: true });
 
+// The copy step: the gate reads the entry's post list from the output
+// directory, so hand it an exact copy of the repository's POSTS.json.
 try {
   copyFileSync(sourceFile, destFile);
 } catch (err) {
   console.error(`failed to copy POSTS.json from ${repoRoot}: ${(err as Error).message}`);
   process.exit(1);
 }
+
+// Report what was handed over: how many post addresses the list carries.
+const { posts } = JSON.parse(readFileSync(destFile, 'utf8'));
+console.log(`copied POSTS.json to ${destFile} (${posts.length} posts listed)`);
